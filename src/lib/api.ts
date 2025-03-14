@@ -11,6 +11,15 @@ const api = axios.create({
   },
 });
 
+// Add auth token to every request if it exists
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // User API calls
 export const fetchUsers = async (): Promise<User[]> => {
   const response = await api.get('/users');
@@ -75,6 +84,34 @@ export const toggleAttendance = async (userId: string): Promise<{
 export const fetchUserUsageStats = async (userId: string = 'all'): Promise<UsageStats[]> => {
   const response = await api.get(`/users/stats/${userId}`);
   return response.data;
+};
+
+// Auth API calls
+export const login = async (email: string, password: string) => {
+  const response = await api.post('/auth/login', { email, password });
+  return response.data;
+};
+
+export const register = async (username: string, email: string, password: string) => {
+  const response = await api.post('/auth/register', { username, email, password });
+  return response.data;
+};
+
+export const getCurrentUser = async () => {
+  const token = localStorage.getItem('auth_token');
+  if (!token) return null;
+  
+  try {
+    // Extract user ID from token
+    const decodedToken = JSON.parse(atob(token.split('.')[1]));
+    const userId = decodedToken._id;
+    
+    const response = await api.get(`/auth/user/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching current user:', error);
+    return null;
+  }
 };
 
 export default api;
