@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { ScanLine, CheckCircle2, XCircle } from 'lucide-react';
-import { scanRFIDTag, User, isUserCheckedIn } from '@/lib/data';
+import { User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { fetchUserByRfid, toggleAttendance } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 
 interface RFIDScannerProps {
   onUserScanned: (user: User, isCheckIn: boolean) => void;
@@ -31,43 +33,50 @@ const RFIDScanner: React.FC<RFIDScannerProps> = ({ onUserScanned }) => {
     }
   }, [scanResult]);
 
-  const handleScan = () => {
+  const handleScan = async () => {
     setScanning(true);
     
-    // Simulate scan delay
-    setTimeout(() => {
-      setScanning(false);
-      
+    try {
       if (!rfidInput.trim()) {
         toast.error('Please enter an RFID tag ID');
+        setScanning(false);
         return;
       }
       
-      const user = scanRFIDTag(rfidInput.trim());
+      // Simulate scan delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (user) {
-        const isCheckedIn = isUserCheckedIn(user.id);
+      // Fetch user by RFID tag
+      const response = await fetchUserByRfid(rfidInput.trim());
+      
+      if (response.user) {
+        // Toggle attendance (check in or out)
+        const attendanceResponse = await toggleAttendance(response.user.id);
+        
         setScanResult({
           success: true,
-          user,
-          isCheckedIn
+          user: response.user,
+          isCheckedIn: attendanceResponse.isCheckIn
         });
         
         // Call the callback
-        onUserScanned(user, !isCheckedIn);
+        onUserScanned(response.user, attendanceResponse.isCheckIn);
         
         toast.success(
-          isCheckedIn 
-            ? `${user.name} has been checked out` 
-            : `${user.name} has been checked in`
+          attendanceResponse.isCheckIn 
+            ? `${response.user.name} has been checked in` 
+            : `${response.user.name} has been checked out`
         );
-      } else {
-        setScanResult({
-          success: false
-        });
-        toast.error('Unknown RFID tag');
       }
-    }, 1000);
+    } catch (error) {
+      console.error('Scan error:', error);
+      setScanResult({
+        success: false
+      });
+      toast.error('Unknown RFID tag or server error');
+    } finally {
+      setScanning(false);
+    }
   };
 
   return (
@@ -86,7 +95,7 @@ const RFIDScanner: React.FC<RFIDScannerProps> = ({ onUserScanned }) => {
                   <CheckCircle2 className="h-12 w-12 text-green-500 mb-2" />
                   <p className="font-medium">{scanResult.user?.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {scanResult.isCheckedIn ? 'Checked Out' : 'Checked In'}
+                    {scanResult.isCheckedIn ? 'Checked In' : 'Checked Out'}
                   </p>
                 </div>
               ) : (
