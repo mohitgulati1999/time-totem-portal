@@ -1,3 +1,4 @@
+
 // Mock data for the RFID attendance management system
 
 export interface User {
@@ -6,14 +7,10 @@ export interface User {
   email: string;
   avatar: string;
   membershipType: 'basic' | 'premium' | 'family';
-  membershipFee?: number;
   memberSince: string;
-  nextPaymentDue?: string;
-  paymentStatus?: 'paid' | 'pending' | 'overdue';
   totalHours: number;
   status: 'active' | 'inactive';
   rfidTag: string;
-  notes?: string;
 }
 
 export interface AttendanceRecord {
@@ -29,15 +26,6 @@ export interface UsageStats {
   hours: number;
 }
 
-export interface PaymentRecord {
-  id: string;
-  userId: string;
-  amount: number;
-  paymentDate: string;
-  paymentMethod: string;
-  extendedUntil: string;
-}
-
 // Mock Users
 export const users: User[] = [
   {
@@ -46,10 +34,7 @@ export const users: User[] = [
     email: 'emma@example.com',
     avatar: 'https://ui-avatars.com/api/?name=Emma+Thompson&background=0D8ABC&color=fff',
     membershipType: 'premium',
-    membershipFee: 99.99,
     memberSince: '2023-01-15',
-    nextPaymentDue: '2023-06-15',
-    paymentStatus: 'paid',
     totalHours: 87,
     status: 'active',
     rfidTag: 'A1B2C3D4'
@@ -60,10 +45,7 @@ export const users: User[] = [
     email: 'james@example.com',
     avatar: 'https://ui-avatars.com/api/?name=James+Wilson&background=FF5733&color=fff',
     membershipType: 'basic',
-    membershipFee: 49.99,
     memberSince: '2023-02-20',
-    nextPaymentDue: '2023-06-01',
-    paymentStatus: 'overdue',
     totalHours: 45,
     status: 'active',
     rfidTag: 'E5F6G7H8'
@@ -74,10 +56,7 @@ export const users: User[] = [
     email: 'sophia@example.com',
     avatar: 'https://ui-avatars.com/api/?name=Sophia+Chen&background=27AE60&color=fff',
     membershipType: 'family',
-    membershipFee: 149.99,
     memberSince: '2023-03-10',
-    nextPaymentDue: '2023-06-10',
-    paymentStatus: 'pending',
     totalHours: 120,
     status: 'active',
     rfidTag: 'I9J0K1L2'
@@ -88,10 +67,7 @@ export const users: User[] = [
     email: 'miguel@example.com',
     avatar: 'https://ui-avatars.com/api/?name=Miguel+Rodriguez&background=8E44AD&color=fff',
     membershipType: 'premium',
-    membershipFee: 99.99,
     memberSince: '2023-01-05',
-    nextPaymentDue: '2023-06-05',
-    paymentStatus: 'paid',
     totalHours: 92,
     status: 'active',
     rfidTag: 'M3N4O5P6'
@@ -102,10 +78,7 @@ export const users: User[] = [
     email: 'olivia@example.com',
     avatar: 'https://ui-avatars.com/api/?name=Olivia+Johnson&background=F39C12&color=fff',
     membershipType: 'basic',
-    membershipFee: 49.99,
     memberSince: '2023-04-18',
-    nextPaymentDue: '2023-06-18',
-    paymentStatus: 'paid',
     totalHours: 30,
     status: 'inactive',
     rfidTag: 'Q7R8S9T0'
@@ -172,50 +145,6 @@ export const attendanceRecords: AttendanceRecord[] = [
   }
 ];
 
-// Mock payment records
-export const paymentRecords: PaymentRecord[] = [
-  {
-    id: 'pay1',
-    userId: '1',
-    amount: 99.99,
-    paymentDate: '2023-05-15',
-    paymentMethod: 'card',
-    extendedUntil: '2023-06-15'
-  },
-  {
-    id: 'pay2',
-    userId: '2',
-    amount: 49.99,
-    paymentDate: '2023-05-01',
-    paymentMethod: 'bank',
-    extendedUntil: '2023-06-01'
-  },
-  {
-    id: 'pay3',
-    userId: '3',
-    amount: 149.99,
-    paymentDate: '2023-05-10',
-    paymentMethod: 'card',
-    extendedUntil: '2023-06-10'
-  },
-  {
-    id: 'pay4',
-    userId: '4',
-    amount: 99.99,
-    paymentDate: '2023-05-05',
-    paymentMethod: 'cash',
-    extendedUntil: '2023-06-05'
-  },
-  {
-    id: 'pay5',
-    userId: '5',
-    amount: 49.99,
-    paymentDate: '2023-05-18',
-    paymentMethod: 'bank',
-    extendedUntil: '2023-06-18'
-  }
-];
-
 // Mock Usage Stats for Charts
 export const generateUserUsageStats = (userId: string): UsageStats[] => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -260,32 +189,4 @@ export const calculateTotalHours = (userId: string): number => {
   return attendanceRecords
     .filter(record => record.userId === userId && record.duration !== null)
     .reduce((total, record) => total + (record.duration || 0), 0);
-};
-
-// Function to get payment records for a user
-export const getUserPaymentRecords = (userId: string): PaymentRecord[] => {
-  return paymentRecords.filter(record => record.userId === userId);
-};
-
-// Function to get users with overdue payments
-export const getUsersWithOverduePayments = (): User[] => {
-  const today = new Date();
-  return users.filter(user => {
-    if (!user.nextPaymentDue) return false;
-    const dueDate = new Date(user.nextPaymentDue);
-    return dueDate < today && user.paymentStatus !== 'paid';
-  });
-};
-
-// Function to get users with upcoming payments (within next 7 days)
-export const getUsersWithUpcomingPayments = (): User[] => {
-  const today = new Date();
-  const nextWeek = new Date(today);
-  nextWeek.setDate(today.getDate() + 7);
-  
-  return users.filter(user => {
-    if (!user.nextPaymentDue) return false;
-    const dueDate = new Date(user.nextPaymentDue);
-    return dueDate >= today && dueDate <= nextWeek;
-  });
 };

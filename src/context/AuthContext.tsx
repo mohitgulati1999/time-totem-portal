@@ -27,65 +27,49 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Auto-authenticate with admin for testing
-  const defaultUser = {
-    _id: 'admin123',
-    username: 'Admin',
-    email: 'admin@laneenos.com',
-    role: 'admin' as const
-  };
-  
-  const defaultToken = 'test-token-for-development';
-  
-  const [user, setUser] = useState<User | null>(defaultUser);
-  const [token, setToken] = useState<string | null>(defaultToken);
-  const [isLoading, setIsLoading] = useState<boolean>(false); // Set to false initially for testing
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('auth_token'));
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // We no longer need to fetch user on mount for testing
   useEffect(() => {
-    // Set default authorization header for all requests
-    axios.defaults.headers.common['Authorization'] = `Bearer ${defaultToken}`;
-  }, []);
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchUser();
+    } else {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  const fetchUser = async () => {
+    try {
+      // We need to extract user ID from the token or fetch current user
+      // This is a simplified version - in a real app, you'd want to handle this better
+      const decodedToken = JSON.parse(atob(token!.split('.')[1]));
+      const userId = decodedToken._id;
+      
+      const response = await axios.get(`http://localhost:5000/api/auth/user/${userId}`);
+      setUser(response.data);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      logout();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        email,
+        password
+      });
       
-      let userData: User;
-      let tokenValue: string;
-      
-      // For testing, we'll simulate the login based on email
-      if (email === 'admin@laneenos.com') {
-        userData = {
-          _id: 'admin123',
-          username: 'Admin',
-          email: 'admin@laneenos.com',
-          role: 'admin'
-        };
-        tokenValue = 'admin-test-token';
-      } else if (email.match(/^member\d+@gmail\.com$/)) {
-        const memberNumber = email.match(/^member(\d+)@gmail\.com$/)[1];
-        userData = {
-          _id: `member${memberNumber}`,
-          username: `Member ${memberNumber}`,
-          email: email,
-          role: 'user'
-        };
-        tokenValue = `member${memberNumber}-test-token`;
-      } else {
-        // Fall back to API call for non-hardcoded emails
-        const response = await axios.post('http://localhost:5000/api/auth/login', {
-          email,
-          password
-        });
-        userData = response.data.user;
-        tokenValue = response.data.token;
-      }
-      
-      localStorage.setItem('auth_token', tokenValue);
-      setToken(tokenValue);
-      setUser(userData);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${tokenValue}`;
+      const { token, user } = response.data;
+      localStorage.setItem('auth_token', token);
+      setToken(token);
+      setUser(user);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       toast.success('Logged in successfully');
     } catch (error: any) {
       console.error('Login error:', error);
@@ -99,20 +83,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (username: string, email: string, password: string) => {
     try {
       setIsLoading(true);
-      
-      // For testing, simulate registration
-      const userData = {
-        _id: 'new-user-123',
+      const response = await axios.post('http://localhost:5000/api/auth/register', {
         username,
         email,
-        role: 'user' as const
-      };
-      const tokenValue = 'new-user-test-token';
+        password
+      });
       
-      localStorage.setItem('auth_token', tokenValue);
-      setToken(tokenValue);
-      setUser(userData);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${tokenValue}`;
+      const { token, user } = response.data;
+      localStorage.setItem('auth_token', token);
+      setToken(token);
+      setUser(user);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       toast.success('Registered successfully');
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -124,12 +105,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    // For testing, we'll reset to admin user instead of fully logging out
-    setUser(defaultUser);
-    setToken(defaultToken);
-    localStorage.setItem('auth_token', defaultToken);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${defaultToken}`;
-    toast.info('Logged out and reset to admin');
+    localStorage.removeItem('auth_token');
+    delete axios.defaults.headers.common['Authorization'];
+    setToken(null);
+    setUser(null);
+    toast.info('Logged out');
   };
 
   return (
@@ -137,7 +117,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       value={{
         user,
         token,
-        isAuthenticated: true, // Always authenticated for testing
+        isAuthenticated: !!user,
         isLoading,
         login,
         register,

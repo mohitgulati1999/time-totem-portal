@@ -5,12 +5,11 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Lock, Mail, EyeOff, Eye, Info } from 'lucide-react';
+import { Lock, Mail, EyeOff, Eye } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -28,8 +27,8 @@ const LoginPage = () => {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'admin@laneenos.com', // Pre-populate with admin email
-      password: '12345678', // Pre-populate with the hardcoded password
+      email: '',
+      password: '',
     },
   });
 
@@ -37,15 +36,7 @@ const LoginPage = () => {
     try {
       setIsLoading(true);
       await login(values.email, values.password);
-      
-      // Redirect based on the email pattern
-      if (values.email === 'admin@laneenos.com') {
-        navigate('/admin');
-      } else if (values.email.startsWith('member')) {
-        navigate('/member');
-      } else {
-        navigate('/admin'); // Default fallback
-      }
+      navigate('/admin'); // Redirect to admin dashboard after login
     } catch (error) {
       console.error('Login error:', error);
       setIsLoading(false);
@@ -54,12 +45,6 @@ const LoginPage = () => {
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
-  };
-
-  const setCredentials = (email: string) => {
-    form.setValue('email', email);
-    form.setValue('password', '12345678');
-    toast.info(`Credentials set to ${email} with password 12345678`);
   };
 
   return (
@@ -75,26 +60,6 @@ const LoginPage = () => {
             <div className="text-center mb-6">
               <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
               <p className="text-muted-foreground">Sign in to your account</p>
-              
-              <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md flex items-start text-sm">
-                <Info className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium mb-1">Available test accounts:</p>
-                  <ul className="list-disc list-inside text-left">
-                    <li className="mb-1">
-                      <button onClick={() => setCredentials('admin@laneenos.com')} className="text-primary hover:underline">
-                        admin@laneenos.com
-                      </button> (Admin access)
-                    </li>
-                    <li>
-                      <button onClick={() => setCredentials('member1@gmail.com')} className="text-primary hover:underline">
-                        member1@gmail.com
-                      </button> (Member access)
-                    </li>
-                  </ul>
-                  <p className="mt-1">Password for all accounts: 12345678</p>
-                </div>
-              </div>
             </div>
 
             <Form {...form}>
