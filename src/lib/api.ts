@@ -1,6 +1,6 @@
 
 import axios from 'axios';
-import { User, AttendanceRecord, UsageStats } from './data';
+import { User, AttendanceRecord, UsageStats, PaymentRecord } from './data';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -48,6 +48,39 @@ export const updateUser = async (id: string, userData: Partial<User>): Promise<U
 
 export const deleteUser = async (id: string): Promise<void> => {
   await api.delete(`/users/${id}`);
+};
+
+// Membership and Fees API calls
+export const updateMembership = async (id: string, membershipData: {
+  membershipType: string;
+  membershipFee: number;
+  nextPaymentDue: Date;
+  paymentStatus: string;
+}): Promise<User> => {
+  const response = await api.put(`/users/${id}/membership`, membershipData);
+  return response.data;
+};
+
+export const recordPayment = async (id: string, paymentData: {
+  amount: number;
+  paymentMethod: string;
+  paymentDate: Date;
+  extendMonths: number;
+}): Promise<{
+  user: User;
+  payment: {
+    amount: number;
+    date: string;
+    nextPaymentDue: string;
+  };
+}> => {
+  const response = await api.post(`/users/${id}/payment`, paymentData);
+  return response.data;
+};
+
+export const fetchUsersByPaymentStatus = async (status: 'upcoming' | 'overdue'): Promise<User[]> => {
+  const response = await api.get('/users/payments/status', { params: { status } });
+  return response.data;
 };
 
 // Attendance API calls

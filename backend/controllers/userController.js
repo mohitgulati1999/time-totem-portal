@@ -118,6 +118,77 @@ exports.findUserByRfid = async (req, res) => {
   }
 };
 
+// Update user membership and fees
+exports.updateMembership = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { membershipType, membershipFee, nextPaymentDue, paymentStatus } = req.body;
+    
+    const updates = {};
+    if (membershipType) updates.membershipType = membershipType;
+    if (membershipFee) updates.membershipFee = membershipFee;
+    if (nextPaymentDue) updates.nextPaymentDue = nextPaymentDue;
+    if (paymentStatus) updates.paymentStatus = paymentStatus;
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      updates,
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const userObj = updatedUser.toObject();
+    userObj.totalHours = await calculateTotalHours(updatedUser._id);
+    
+    res.status(200).json(userObj);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Record a payment for a user
+exports.recordPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount, extendMonths = 1 } = req.body;
+    
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Update next payment due date
+    const nextPaymentDue = new Date(user.nextPaymentDue);
+    nextPaymentDue.setMonth(nextPaymentDue.getMonth() + extendMonths);
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { 
+        nextPaymentDue,
+        paymentStatus: 'paid'
+      },
+      { new: true }
+    );
+    
+    const userObj = updatedUser.toObject();
+    userObj.totalHours = await calculateTotalHours(updatedUser._id);
+    
+    res.status(200).json({
+      user: userObj,
+      payment: {
+        amount,
+        date: new Date(),
+        nextPaymentDue
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 // Helper function to calculate total hours for a user
 async function calculateTotalHours(userId) {
   try {
@@ -190,6 +261,43 @@ exports.getUserUsageStats = async (req, res) => {
     });
     
     res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get users with upcoming or overdue payments
+exports.getUsersByPaymentStatus = async (req, res) => {
+  try {
+    const { status } = req.query;
+    const today = new Date();
+    
+    // Set date ranges
+    const upcomingDate = new Date();
+    upcomingDate.setDate(today.getDate() + 7); // Next 7 days
+    
+    let filter = {};
+    
+    if (status === 'upcoming') {
+      filter = {
+        nextPaymentDue: { $gte: today, $lte: upcomingDate }
+      };
+    } else if (status === 'overdue') {
+      filter = {
+        nextPaymentDue: { $lt: today }
+      };
+    }
+    
+    const users = await User.find(filter);
+    
+    const usersWithHours = await Promise.all(users.map(async (user) => {
+      const totalHours = await calculateTotalHours(user._id);
+      const userObj = user.toObject();
+      userObj.totalHours = totalHours;
+      return userObj;
+    }));
+    
+    res.status(200).json(usersWithHours);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
