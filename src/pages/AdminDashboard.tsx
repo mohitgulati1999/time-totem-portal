@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/Header';
@@ -7,16 +7,20 @@ import RFIDScanner from '@/components/RFIDScanner';
 import AttendanceTable from '@/components/AttendanceTable';
 import UsageChart from '@/components/UsageChart';
 import UserManagement from '@/components/UserManagement';
+import MembershipManagement from '@/components/membership/MembershipManagement';
 import { 
   attendanceRecords, 
   generateUserUsageStats, 
   User,
-  users
+  users,
+  fetchUsers
 } from '@/lib/data';
 import { toast } from 'sonner';
 
 const AdminDashboard = () => {
   const [userScanned, setUserScanned] = useState<{ user: User; isCheckIn: boolean } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState("dashboard");
   
   const handleUserScanned = (user: User, isCheckIn: boolean) => {
     setUserScanned({ user, isCheckIn });
@@ -28,6 +32,16 @@ const AdminDashboard = () => {
         ? `${user.name} checked in successfully` 
         : `${user.name} checked out successfully`
     );
+  };
+  
+  const handleUserSelect = (user: User) => {
+    setSelectedUser(user);
+    setActiveTab("membership");
+  };
+  
+  const handleUserUpdate = () => {
+    // Refresh user data after update
+    toast.info("User information updated");
   };
   
   // For the usage chart, we'll use combined data from all users
@@ -48,11 +62,12 @@ const AdminDashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="membership">Membership & Fees</TabsTrigger>
           </TabsList>
           
           <TabsContent value="dashboard" className="space-y-6 page-transition">
@@ -82,7 +97,20 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="users" className="space-y-6 page-transition">
-            <UserManagement />
+            <UserManagement onUserSelect={handleUserSelect} />
+          </TabsContent>
+          
+          <TabsContent value="membership" className="space-y-6 page-transition">
+            {selectedUser ? (
+              <MembershipManagement user={selectedUser} onUpdate={handleUserUpdate} />
+            ) : (
+              <div className="text-center py-12 border rounded-md">
+                <h3 className="text-lg font-medium mb-2">No User Selected</h3>
+                <p className="text-muted-foreground">
+                  Please select a user from the User Management tab to configure their membership.
+                </p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </motion.div>

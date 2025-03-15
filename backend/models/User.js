@@ -22,8 +22,30 @@ const userSchema = new mongoose.Schema({
   },
   membershipType: {
     type: String,
-    enum: ['basic', 'premium', 'family'],
+    enum: ['basic', 'premium', 'family', 'student', 'senior', 'corporate'],
     default: 'basic'
+  },
+  membershipDetails: {
+    startDate: {
+      type: Date,
+      default: Date.now
+    },
+    endDate: {
+      type: Date
+    },
+    feesPaid: {
+      type: Boolean,
+      default: false
+    },
+    lastPaymentDate: {
+      type: Date
+    },
+    paymentHistory: [{
+      amount: Number,
+      date: Date,
+      method: String,
+      notes: String
+    }]
   },
   memberSince: {
     type: Date,
@@ -31,7 +53,7 @@ const userSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'inactive'],
+    enum: ['active', 'inactive', 'expired', 'suspended'],
     default: 'active'
   },
   rfidTag: {

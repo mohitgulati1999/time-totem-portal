@@ -24,4 +24,11 @@ router.put('/:id', userController.updateUser);
 // DELETE a user
 router.delete('/:id', userController.deleteUser);
 
+// Membership management routes
+router.put('/:id/membership', userController.updateMembership);
+
+// Payment management routes
+router.post('/:id/payment', userController.recordPayment);
+router.get('/:id/payment-history', userController.getPaymentHistory);
+
 module.exports = router;
