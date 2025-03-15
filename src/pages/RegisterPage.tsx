@@ -5,11 +5,12 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Lock, Mail, User, EyeOff, Eye } from 'lucide-react';
+import { Lock, Mail, User, EyeOff, Eye, Info } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { toast } from 'sonner';
 
 const registerSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
@@ -33,10 +34,10 @@ const RegisterPage = () => {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
+      username: 'New Member',
+      email: 'member3@gmail.com',
+      password: '12345678',
+      confirmPassword: '12345678',
     },
   });
 
@@ -44,11 +45,32 @@ const RegisterPage = () => {
     try {
       setIsLoading(true);
       await register(values.username, values.email, values.password);
-      navigate('/admin'); // Redirect to admin dashboard after registration
+      
+      // Redirect based on email (for demo purposes)
+      if (values.email === 'admin@laneenos.com') {
+        navigate('/admin');
+      } else {
+        navigate('/member');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       setIsLoading(false);
     }
+  };
+
+  const setCredentials = (type: string) => {
+    if (type === 'admin') {
+      form.setValue('username', 'Admin User');
+      form.setValue('email', 'admin@laneenos.com');
+    } else {
+      // Find a member number between 1-10 that's not already used
+      const memberNum = Math.floor(Math.random() * 10) + 1;
+      form.setValue('username', `Member ${memberNum}`);
+      form.setValue('email', `member${memberNum}@gmail.com`);
+    }
+    form.setValue('password', '12345678');
+    form.setValue('confirmPassword', '12345678');
+    toast.info(`Credentials set for ${type} account with password 12345678`);
   };
 
   return (
@@ -64,6 +86,31 @@ const RegisterPage = () => {
             <div className="text-center mb-6">
               <h1 className="text-3xl font-bold mb-2">Create Account</h1>
               <p className="text-muted-foreground">Sign up for a new account</p>
+              
+              <div className="mt-4 p-3 bg-blue-50 text-blue-700 rounded-md flex items-start text-sm">
+                <Info className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="mb-1">Instead of creating a new account, try using one of our test accounts:</p>
+                  <div className="flex space-x-2 justify-center mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCredentials('admin')}
+                      className="text-xs"
+                    >
+                      Set Admin Account
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setCredentials('member')}
+                      className="text-xs"
+                    >
+                      Set Member Account
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <Form {...form}>
