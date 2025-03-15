@@ -6,11 +6,7 @@ import SearchBar from './user-management/SearchBar';
 import UserTable from './user-management/UserTable';
 import DeleteConfirmationDialog from './user-management/DeleteConfirmationDialog';
 
-interface UserManagementProps {
-  onUserSelect?: (user: User) => void;
-}
-
-const UserManagement: React.FC<UserManagementProps> = ({ onUserSelect }) => {
+const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -22,14 +18,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ onUserSelect }) => {
   );
 
   const handleEditUser = (userId: string) => {
-    const user = users.find(user => user.id === userId);
-    if (user && onUserSelect) {
-      onUserSelect(user);
-    } else {
-      toast("Edit functionality would be implemented here", {
-        description: `Editing user with ID: ${userId}`,
-      });
-    }
+    toast("Edit functionality would be implemented here", {
+      description: `Editing user with ID: ${userId}`,
+    });
   };
 
   const confirmDeleteUser = (userId: string) => {

@@ -1,3 +1,4 @@
+
 // Mock data for the RFID attendance management system
 
 export interface User {
@@ -5,25 +6,11 @@ export interface User {
   name: string;
   email: string;
   avatar: string;
-  membershipType: 'basic' | 'premium' | 'family' | 'student' | 'senior' | 'corporate';
+  membershipType: 'basic' | 'premium' | 'family';
   memberSince: string;
   totalHours: number;
-  status: 'active' | 'inactive' | 'expired' | 'suspended';
+  status: 'active' | 'inactive';
   rfidTag: string;
-  membershipDetails?: {
-    startDate: string;
-    endDate?: string;
-    feesPaid: boolean;
-    lastPaymentDate?: string;
-    paymentHistory?: Payment[];
-  };
-}
-
-export interface Payment {
-  amount: number;
-  date: string;
-  method: string;
-  notes?: string;
 }
 
 export interface AttendanceRecord {
@@ -39,27 +26,6 @@ export interface UsageStats {
   hours: number;
 }
 
-// Fee structure for different membership types
-export const membershipFees = {
-  basic: 50,
-  premium: 100,
-  family: 150,
-  student: 30,
-  senior: 40,
-  corporate: 200
-};
-
-// Payment methods
-export const paymentMethods = [
-  'Cash',
-  'Credit Card',
-  'Debit Card',
-  'Bank Transfer',
-  'PayPal',
-  'Check',
-  'Other'
-];
-
 // Mock Users
 export const users: User[] = [
   {
@@ -71,16 +37,7 @@ export const users: User[] = [
     memberSince: '2023-01-15',
     totalHours: 87,
     status: 'active',
-    rfidTag: 'A1B2C3D4',
-    membershipDetails: {
-      startDate: '2023-01-15',
-      endDate: '2024-01-15',
-      feesPaid: true,
-      lastPaymentDate: '2023-01-15',
-      paymentHistory: [
-        { amount: 100, date: '2023-01-15', method: 'Credit Card', notes: 'Annual membership' }
-      ]
-    }
+    rfidTag: 'A1B2C3D4'
   },
   {
     id: '2',
@@ -91,13 +48,7 @@ export const users: User[] = [
     memberSince: '2023-02-20',
     totalHours: 45,
     status: 'active',
-    rfidTag: 'E5F6G7H8',
-    membershipDetails: {
-      startDate: '2023-02-20',
-      endDate: '2024-02-20',
-      feesPaid: true,
-      lastPaymentDate: '2023-02-20'
-    }
+    rfidTag: 'E5F6G7H8'
   },
   {
     id: '3',
@@ -108,13 +59,7 @@ export const users: User[] = [
     memberSince: '2023-03-10',
     totalHours: 120,
     status: 'active',
-    rfidTag: 'I9J0K1L2',
-    membershipDetails: {
-      startDate: '2023-03-10',
-      endDate: '2024-03-10',
-      feesPaid: true,
-      lastPaymentDate: '2023-03-10'
-    }
+    rfidTag: 'I9J0K1L2'
   },
   {
     id: '4',
@@ -125,12 +70,7 @@ export const users: User[] = [
     memberSince: '2023-01-05',
     totalHours: 92,
     status: 'active',
-    rfidTag: 'M3N4O5P6',
-    membershipDetails: {
-      startDate: '2023-01-05',
-      endDate: '2024-01-05',
-      feesPaid: false
-    }
+    rfidTag: 'M3N4O5P6'
   },
   {
     id: '5',
@@ -141,12 +81,7 @@ export const users: User[] = [
     memberSince: '2023-04-18',
     totalHours: 30,
     status: 'inactive',
-    rfidTag: 'Q7R8S9T0',
-    membershipDetails: {
-      startDate: '2023-04-18',
-      endDate: '2024-04-18',
-      feesPaid: false
-    }
+    rfidTag: 'Q7R8S9T0'
   }
 ];
 
